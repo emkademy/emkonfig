@@ -1,0 +1,6 @@
+*
+
+!docker
+!emkonfig
+!pyproject.toml
+!poetry.lock

@@ -1,0 +1,3 @@
+_self_._target_: dummy.models.backbones.ResNet50Backbone
+
+out_features: 1000
