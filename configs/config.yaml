@@ -13,6 +13,12 @@ data_module:
 
 training_task:
   data_module: ${data_module}
+  lalala:
+    - _{some_class as nihaha}:
+        oldu: mu
+        olmadi: mi
+        backbone: ${backbone}
+    - ${training_task.lalala[0].nihaha.oldu}
 
   lightning_module:
     _target_: dummy.lightning_modules.SomeLightningModule

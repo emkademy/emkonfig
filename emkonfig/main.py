@@ -1,3 +1,5 @@
+import re
+
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any
@@ -93,23 +95,38 @@ class ReferenceKeyParser(Parser):
             elif isinstance(value, list):
                 new_values = []
                 for item in value:
-                    new_values.append(self.parse(full_content, item))
+                    if self.is_reference_key(item):
+                        assert isinstance(item, str), f"Invalid value for reference key parser: {item}"
+                        new_values.append(self.get_value_from_dot_notation(full_content, item))
+                    else:
+                        new_values.append(self.parse(full_content, item))
                 new_content[key] = new_values
 
-            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
-                reference_key = value[2:-1]
-                new_value = self.get_value_from_dot_notation(full_content, reference_key)
+            if self.is_reference_key(value):
+                assert isinstance(value, str), f"Invalid value for reference key parser: {value}"
+                new_value = self.get_value_from_dot_notation(full_content, value)
                 new_content[key] = self.parse(full_content, new_value)
 
         return new_content
 
+    def is_reference_key(self, value: Any) -> bool:
+        return isinstance(value, str) and value.startswith("${") and value.endswith("}")
+
     def get_value_from_dot_notation(self, content: dict[str, Any], reference_key: str) -> Any:
+        reference_key = reference_key[2:-1]
         keys = reference_key.split(".")
         value = content
         for key in keys:
             try:
-                value = value[key]
-            except KeyError:
+                matches = re.findall(r"^.*?\[[^\d]*(\d+)[^\d]*\].*$", key)
+                if len(matches) > 0:
+                    match = matches[0]
+                    key = key.replace(f"[{match}]", "")
+                    value = value[key][int(match)]
+                else:
+                    value = value[key]
+            except KeyError as err:
+                print(err)
                 raise KeyError(f"Invalid reference key: {reference_key}")
         return value
 
