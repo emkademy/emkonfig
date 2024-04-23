@@ -1,9 +1,20 @@
 [tool.poetry]
-name = "emkademy"
+name = "emkonfig"
 version = "0.1.0"
-description = ""
-authors = ["Kıvanç Yüksel <emkademy@gmail.com>"]
+description = "YAML template based configuration management tool"
+authors = ["Kıvanç Yüksel <kivanc.yuksel@emkademy.com>"]
 readme = "README.md"
+license = "MIT"
+classifiers= [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3.10",
+    "Natural Language :: English",
+    ]
+packages = [
+    { include = "emkonfig" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"

@@ -91,6 +91,10 @@ down:
 exec-in: up
 	docker exec -it $(CONTAINER_NAME) bash
 
+ ## Package the code and share it on PyPi
+package:
+	@$(DOCKER_COMPOSE_COMMAND) run --rm app poetry publish --build
+
 .DEFAULT_GOAL := help
 
 # Inspired by <http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
