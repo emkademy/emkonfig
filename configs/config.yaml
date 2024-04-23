@@ -36,3 +36,8 @@ head: ${./configs/heads/linear.yaml}
 
 asd:
   bsd: ${data_module.dataset}
+
+_{dsd as nihao}:
+  hoho: 5
+  _{lola as some_other_class}:
+    batch_size: 1212

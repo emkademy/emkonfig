@@ -1,2 +1,0 @@
-class SomeOtherClass:
-    pass

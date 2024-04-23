@@ -1,27 +1,10 @@
 import re
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Any
 
-from emkonfig.register import _EMKONFIG_REGISTRY, register
+from emkonfig.registry import _EMKONFIG_DEFAULTS_REGISTRY, _EMKONFIG_REGISTRY
 from emkonfig.utils import load_yaml
-
-
-@register("some_class")
-class SomeClass:
-    def __init__(self, **kwargs) -> None:
-        self.kwargs = kwargs
-
-    def __repr__(self) -> str:
-        return f"SomeClass({self.kwargs=})"
-
-
-class Syntax(Enum):
-    STANDARD = "standard"
-    CLASS_SLUG = "class_slug"
-    REFERENCE_KEY = "reference_key"
-    REFERENCE_YAML = "reference_yaml"
 
 
 class Parser(ABC):
@@ -63,11 +46,16 @@ class ClassSlugParser(Parser):
                 new_content[key] = self.parse(full_content, value)
 
             if isinstance(key, str) and key.startswith("_{") and key.endswith("}"):
+                value = new_content.get(key, value)
+                if value is None:
+                    value = {}
                 assert isinstance(value, dict), f"Invalid value for class slug key parser: {value}"
                 class_slug, new_key = self.parse_class_slug_key(key)
                 cls = _EMKONFIG_REGISTRY[class_slug]
                 cls_location = cls.__module__ + "." + cls.__name__
-                new_content[new_key] = {"_target_": cls_location, **value}
+                parameters = _EMKONFIG_DEFAULTS_REGISTRY[class_slug]
+                parameters.update(value)
+                new_content[new_key] = {"_target_": cls_location, **parameters}
                 del new_content[key]
 
         return new_content
@@ -129,61 +117,3 @@ class ReferenceKeyParser(Parser):
                 print(err)
                 raise KeyError(f"Invalid reference key: {reference_key}")
         return value
-
-
-class Emkonfig:
-    def __init__(self, path: str) -> None:
-        self.original_yaml_context = load_yaml(path)
-        self.parse_order = [Syntax.REFERENCE_YAML, Syntax.CLASS_SLUG, Syntax.REFERENCE_KEY]
-        self.syntax_to_parser = {
-            Syntax.CLASS_SLUG: ClassSlugParser(),
-            Syntax.REFERENCE_KEY: ReferenceKeyParser(),
-            Syntax.REFERENCE_YAML: ReferenceYamlParser(),
-        }
-
-    def parse(self, content: dict[str, Any]) -> dict[str, Any]:
-        new_content = content.copy()
-        for syntax in self.parse_order:
-            new_content = self.syntax_to_parser[syntax].parse(new_content, new_content)
-        return new_content
-
-    # def parse_key_value(self, key: str | None, value: Any) -> tuple[str | None, Any]:
-    #     new_key = key
-    #
-    #     if isinstance(value, list):
-    #         new_value = []
-    #         for item in value:
-    #             _, new_item = self.parse_key_value(None, item)
-    #             new_value.append(new_item)
-    #     elif isinstance(value, dict):
-    #         new_value = self.parse_yaml(value)
-    #     else:
-    #         value_syntax = get_syntax_type(value)
-    #         new_key, new_value = self.syntax_to_parser[value_syntax].parse(self.original_yaml_context, key, value)
-    #
-    #     return new_key, new_value
-    #
-    # def parse_yaml(self, content: dict[str, Any]) -> dict[str, Any]:
-    #     new_content = {}
-    #
-    #     for key, value in content.items():
-    #         new_key, new_value = self.parse_key_value(key, value)
-    #         try:
-    #             new_content[new_key] = new_value
-    #         except Exception as err:
-    #             print(err)
-    #             print(f"{new_key=}, {new_value=}")
-    #             exit(0)
-    #
-    #     return content
-
-
-def main() -> None:
-    from omegaconf import OmegaConf
-
-    config = Emkonfig("configs/config.yaml")
-    print(OmegaConf.to_yaml(config.parse(config.original_yaml_context)))
-
-
-if __name__ == "__main__":
-    main()
