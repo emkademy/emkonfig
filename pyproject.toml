@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "emkonfig"
-version = "0.1.0"
+version = "0.1.2"
 description = "YAML template based configuration management tool"
 authors = ["Kıvanç Yüksel <kivanc.yuksel@emkademy.com>"]
 readme = "README.md"
@@ -17,7 +17,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10"
 omegaconf = "~=2.3"
 
 [tool.poetry.group.dev.dependencies]

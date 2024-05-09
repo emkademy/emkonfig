@@ -55,14 +55,17 @@ class ClassSlugParser(Parser):
                 cls_location = cls.__module__ + "." + cls.__name__
                 parameters = _EMKONFIG_DEFAULTS_REGISTRY[class_slug]
                 parameters.update(value)
-                new_content[new_key] = {"_target_": cls_location, **parameters}
+                if new_key == "_":
+                    new_content.update({"_target_": cls_location, **parameters})
+                else:
+                    new_content[new_key] = {"_target_": cls_location, **parameters}
                 del new_content[key]
 
         return new_content
 
     @staticmethod
     def parse_class_slug_key(key: str) -> tuple[str, str]:
-        if "as" in key:
+        if " as " in key:
             class_slug, new_key = key[2:-1].split(" as ")
         else:
             class_slug = key[2:-1]
