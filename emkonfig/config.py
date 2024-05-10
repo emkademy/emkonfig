@@ -42,3 +42,9 @@ class Emkonfig:
         for syntax in self.parse_order:
             new_content = self.syntax_to_parser[syntax].parse(new_content, new_content)
         return OmegaConf.create(new_content)
+
+    def print(self, config: DictConfig) -> None:
+        print(OmegaConf.to_yaml(config))
+
+    def __repr__(self) -> str:
+        return OmegaConf.to_yaml(self.parse())
