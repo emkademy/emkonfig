@@ -27,6 +27,8 @@ def import_modules(dir_name: str, exclude: list[str] | set[str] | None = None, v
         if path.name.startswith("__"):
             continue
         module_path = path.with_suffix("").as_posix().replace("/", ".")
+        if verbose:
+            print(f"Importing module: {module_path}")
 
         try:
             importlib.import_module(module_path)
