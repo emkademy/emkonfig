@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "emkonfig"
-version = "0.1.2"
+version = "0.1.4"
 description = "YAML template based configuration management tool"
 authors = ["Kıvanç Yüksel <kivanc.yuksel@emkademy.com>"]
 readme = "README.md"
