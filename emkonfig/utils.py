@@ -27,6 +27,11 @@ def import_modules(dir_name: str, exclude: list[str] | set[str] | None = None, v
         if path.name.startswith("__"):
             continue
         module_path = path.with_suffix("").as_posix().replace("/", ".")
+        if module_path in exclude:
+            if verbose:
+                print(f"Skipping module: {module_path}")
+            continue
+
         if verbose:
             print(f"Importing module: {module_path}")
 
