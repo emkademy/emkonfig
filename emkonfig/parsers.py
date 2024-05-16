@@ -1,10 +1,20 @@
 import re
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Any
+
+from omegaconf import DictConfig, OmegaConf
 
 from emkonfig.registry import _EMKONFIG_DEFAULTS_REGISTRY, _EMKONFIG_REGISTRY
 from emkonfig.utils import load_yaml
+
+
+class Syntax(Enum):
+    STANDARD = "standard"
+    CLASS_SLUG = "class_slug"
+    REFERENCE_KEY = "reference_key"
+    REFERENCE_YAML = "reference_yaml"
 
 
 class Parser(ABC):
@@ -23,10 +33,17 @@ class ReferenceYamlParser(Parser):
         for key, value in content.items():
             if isinstance(value, dict):
                 new_content[key] = self.parse(full_content, value)
-            elif isinstance(value, str) and value.startswith("${") and value.endswith(".yaml}"):
+            elif self.is_yaml_reference(value):
                 reference_yaml = value[2:-1]
-                new_content[key] = load_yaml(reference_yaml)
+                if key == "_":
+                    new_content.update(SequenceParser(reference_yaml).parse())
+                    del new_content[key]
+                else:
+                    new_content[key] = SequenceParser(reference_yaml).parse()
         return new_content
+
+    def is_yaml_reference(self, value: Any) -> bool:
+        return isinstance(value, str) and value.startswith("${") and value.endswith(".yaml}")
 
 
 class ClassSlugParser(Parser):
@@ -101,7 +118,7 @@ class ReferenceKeyParser(Parser):
         return new_content
 
     def is_reference_key(self, value: Any) -> bool:
-        return isinstance(value, str) and value.startswith("${") and value.endswith("}")
+        return isinstance(value, str) and value.startswith("${") and value.endswith("}") and not value.endswith(".yaml}")
 
     def get_value_from_dot_notation(self, content: dict[str, Any], reference_key: str) -> Any:
         reference_key = reference_key[2:-1]
@@ -120,3 +137,33 @@ class ReferenceKeyParser(Parser):
                 print(err)
                 raise KeyError(f"Invalid reference key: {reference_key}")
         return value
+
+
+class SequenceParser:
+    def __init__(self, path: str, parse_order: list[Syntax] | None = None, syntax_to_parser: dict[Syntax, Parser] | None = None) -> None:
+        self.original_yaml_content = load_yaml(path)
+
+        if parse_order is None:
+            parse_order = [Syntax.REFERENCE_YAML, Syntax.CLASS_SLUG, Syntax.REFERENCE_KEY]
+        self.parse_order = parse_order
+
+        if syntax_to_parser is None:
+            syntax_to_parser = {
+                Syntax.CLASS_SLUG: ClassSlugParser(),
+                Syntax.REFERENCE_KEY: ReferenceKeyParser(),
+                Syntax.REFERENCE_YAML: ReferenceYamlParser(),
+            }
+
+        self.syntax_to_parser = syntax_to_parser
+
+        if not all(syntax in self.syntax_to_parser for syntax in self.parse_order):
+            raise ValueError("parse_order contains syntax not in syntax_to_parser")
+
+    def parse(self, content: dict[str, Any] | None = None) -> DictConfig:
+        if content is None:
+            content = self.original_yaml_content
+
+        new_content = content.copy()
+        for syntax in self.parse_order:
+            new_content = self.syntax_to_parser[syntax].parse(new_content, new_content)
+        return OmegaConf.create(new_content)

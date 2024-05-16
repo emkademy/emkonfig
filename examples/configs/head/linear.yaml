@@ -1,2 +1,4 @@
 in_features: 512
 out_features: 1024
+_: ${./examples/configs/backbone/resnet50.yaml}
+peki_bu: ${in_features}
