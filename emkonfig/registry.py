@@ -28,9 +28,11 @@ def register(cls_slug: str):
     return decorator
 
 
-def register_class(slug: str, cls, **kwargs) -> None:
+def register_class(slug: str, cls, partial: bool = False, **kwargs) -> None:
     if slug not in _EMKONFIG_DEFAULTS_REGISTRY:
         default_arguments = get_default_arguments(cls)
         default_arguments.update(kwargs)
+        if partial:
+            default_arguments["_partial_"] = True
         _EMKONFIG_DEFAULTS_REGISTRY[slug] = default_arguments
         _EMKONFIG_REGISTRY[slug] = cls

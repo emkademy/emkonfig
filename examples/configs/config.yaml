@@ -45,3 +45,8 @@ _{yet_another_class as nihao}:
 datamodule:
   _{some_other_class as _}:
     batch_size: 1212
+
+_{lala}: null
+
+lala:
+  bsd: 5

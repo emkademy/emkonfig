@@ -11,7 +11,6 @@ from emkonfig.utils import load_yaml
 
 
 class Syntax(Enum):
-    STANDARD = "standard"
     CLASS_SLUG = "class_slug"
     REFERENCE_KEY = "reference_key"
     REFERENCE_YAML = "reference_yaml"
@@ -42,11 +41,15 @@ class ReferenceYamlParser(Parser):
                     new_content[key] = SequenceParser(reference_yaml).parse()
         return new_content
 
-    def is_yaml_reference(self, value: Any) -> bool:
+    @staticmethod
+    def is_yaml_reference(value: Any) -> bool:
         return isinstance(value, str) and value.startswith("${") and value.endswith(".yaml}")
 
 
 class ClassSlugParser(Parser):
+    def __init__(self) -> None:
+        self.seen = set()
+
     def parse(self, full_content: dict[str, Any], content: dict[str, Any]) -> dict[str, Any]:
         try:
             new_content = content.copy()
@@ -58,11 +61,14 @@ class ClassSlugParser(Parser):
                 new_values = []
                 for item in value:
                     new_values.append(self.parse(full_content, item))
+                new_key_update_dict = new_content.get(key, [])
                 new_content[key] = new_values
+                new_content[key].extend(new_key_update_dict)
             elif isinstance(value, dict):
-                new_content[key] = self.parse(full_content, value)
+                if key not in self.seen:
+                    new_content[key] = self.parse(full_content, value)
 
-            if isinstance(key, str) and key.startswith("_{") and key.endswith("}"):
+            if self.is_class_slug_key(key):
                 value = new_content.get(key, value)
                 if value is None:
                     value = {}
@@ -75,7 +81,9 @@ class ClassSlugParser(Parser):
                 if new_key == "_":
                     new_content.update({"_target_": cls_location, **parameters})
                 else:
-                    new_content[new_key] = {"_target_": cls_location, **parameters}
+                    new_key_update_dict = new_content.get(new_key, {})
+                    new_content[new_key] = {"_target_": cls_location, **parameters, **new_key_update_dict}
+                self.seen.add(new_key)
                 del new_content[key]
 
         return new_content
@@ -88,6 +96,10 @@ class ClassSlugParser(Parser):
             class_slug = key[2:-1]
             new_key = key[2:-1]
         return class_slug, new_key
+
+    @staticmethod
+    def is_class_slug_key(key: str) -> bool:
+        return isinstance(key, str) and key.startswith("_{") and key.endswith("}")
 
 
 class ReferenceKeyParser(Parser):
@@ -117,7 +129,8 @@ class ReferenceKeyParser(Parser):
 
         return new_content
 
-    def is_reference_key(self, value: Any) -> bool:
+    @staticmethod
+    def is_reference_key(value: Any) -> bool:
         return isinstance(value, str) and value.startswith("${") and value.endswith("}") and not value.endswith(".yaml}")
 
     def get_value_from_dot_notation(self, content: dict[str, Any], reference_key: str) -> Any:
