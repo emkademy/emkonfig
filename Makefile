@@ -92,8 +92,8 @@ exec-in: up
 	docker exec -it $(CONTAINER_NAME) bash
 
  ## Package the code and share it on PyPi
-package:
-	@$(DOCKER_COMPOSE_COMMAND) run --rm app poetry publish --build
+package: up
+	@$(DOCKER_COMPOSE_EXEC) poetry publish --build
 
 .DEFAULT_GOAL := help
 
