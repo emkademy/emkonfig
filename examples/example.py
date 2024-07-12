@@ -17,5 +17,5 @@ if __name__ == "__main__":
     emkonfig = Emkonfig("examples/configs/config.yaml")
     config = emkonfig.parse()
     emkonfig.print(config)
-    some_class = instantiate(config.nihao)
-    print(some_class)
+    # some_class = instantiate(config.nihao)
+    # print(some_class)

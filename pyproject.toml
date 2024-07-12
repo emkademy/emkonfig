@@ -32,6 +32,7 @@ pytest-cov = "~=4.1"
 pytest-xdist = "~=3.5"
 pytest-sugar = "~=0.9"
 pytest-mock = "~=3.12"
+gcsfs = "~=2024.6"
 
 [build-system]
 requires = ["poetry-core"]

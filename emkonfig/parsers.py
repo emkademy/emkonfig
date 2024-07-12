@@ -1,13 +1,14 @@
 import re
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from enum import Enum
-from typing import Any
+from typing import Any, Iterator
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 from emkonfig.registry import _EMKONFIG_DEFAULTS_REGISTRY, _EMKONFIG_REGISTRY
-from emkonfig.utils import load_yaml
+from emkonfig.utils import merge_dicts
 
 
 class Syntax(Enum):
@@ -35,10 +36,10 @@ class ReferenceYamlParser(Parser):
             elif self.is_yaml_reference(value):
                 reference_yaml = value[2:-1]
                 if key == "_":
-                    new_content.update(SequenceParser(reference_yaml).parse())
+                    new_content.update(FullConfigParser(reference_yaml).parse())
                     del new_content[key]
                 else:
-                    new_content[key] = SequenceParser(reference_yaml).parse()
+                    new_content[key] = FullConfigParser(reference_yaml).parse()
         return new_content
 
     @staticmethod
@@ -47,10 +48,7 @@ class ReferenceYamlParser(Parser):
 
 
 class ClassSlugParser(Parser):
-    def __init__(self) -> None:
-        self.seen = set()
-
-    def parse(self, full_content: dict[str, Any], content: dict[str, Any]) -> dict[str, Any]:
+    def parse(self, full_content: dict[str, Any], content: dict[str, Any], seen=set()) -> dict[str, Any]:
         try:
             new_content = content.copy()
         except AttributeError:
@@ -60,13 +58,13 @@ class ClassSlugParser(Parser):
             if isinstance(value, list):
                 new_values = []
                 for item in value:
-                    new_values.append(self.parse(full_content, item))
+                    new_values.append(self.parse(full_content, item, seen))
                 new_key_update_dict = new_content.get(key, [])
                 new_content[key] = new_values
                 new_content[key].extend(new_key_update_dict)
             elif isinstance(value, dict):
-                if key not in self.seen:
-                    new_content[key] = self.parse(full_content, value)
+                if key not in seen:
+                    new_content[key] = self.parse(full_content, value, seen)
 
             if self.is_class_slug_key(key):
                 value = new_content.get(key, value)
@@ -83,7 +81,7 @@ class ClassSlugParser(Parser):
                 else:
                     new_key_update_dict = new_content.get(new_key, {})
                     new_content[new_key] = {"_target_": cls_location, **parameters, **new_key_update_dict}
-                self.seen.add(new_key)
+                seen.add(new_key)
                 del new_content[key]
 
         return new_content
@@ -153,9 +151,7 @@ class ReferenceKeyParser(Parser):
 
 
 class SequenceParser:
-    def __init__(self, path: str, parse_order: list[Syntax] | None = None, syntax_to_parser: dict[Syntax, Parser] | None = None) -> None:
-        self.original_yaml_content = load_yaml(path)
-
+    def __init__(self, parse_order: list[Syntax] | None = None, syntax_to_parser: dict[Syntax, Parser] | None = None) -> None:
         if parse_order is None:
             parse_order = [Syntax.REFERENCE_YAML, Syntax.CLASS_SLUG, Syntax.REFERENCE_KEY]
         self.parse_order = parse_order
@@ -170,13 +166,63 @@ class SequenceParser:
         self.syntax_to_parser = syntax_to_parser
 
         if not all(syntax in self.syntax_to_parser for syntax in self.parse_order):
+            print(f"{self.parse_order=}")
+            print(f"{self.syntax_to_parser=}")
             raise ValueError("parse_order contains syntax not in syntax_to_parser")
 
-    def parse(self, content: dict[str, Any] | None = None) -> DictConfig:
-        if content is None:
-            content = self.original_yaml_content
-
+    def parse(self, content: dict[str, Any]) -> dict[str, Any]:
         new_content = content.copy()
         for syntax in self.parse_order:
             new_content = self.syntax_to_parser[syntax].parse(new_content, new_content)
-        return OmegaConf.create(new_content)
+        return new_content
+
+
+class FullConfigParser:
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.parser = SequenceParser(parse_order=[Syntax.REFERENCE_YAML, Syntax.CLASS_SLUG])
+        self.referance_key_parser = SequenceParser(parse_order=[Syntax.REFERENCE_KEY])
+
+    def parse(self) -> dict[str, Any]:
+        parsed_content = self.line_by_line_parser()
+        # parsed_content = self.referance_key_parser.parse(parsed_content)
+        return parsed_content
+
+    def line_by_line_parser(self) -> dict[str, Any]:
+        parsed_content = {}
+        for key in self.yaml_iterator():
+            key_yaml = OmegaConf.to_container(OmegaConf.create(key))  # type: ignore
+            parsed_key_yaml = self.parser.parse(key_yaml)  # type: ignore
+            parsed_content_before = deepcopy(parsed_key_yaml)
+            parsed_content = merge_dicts(
+                parsed_content,
+                parsed_key_yaml,
+                concat_lists=False,
+            )
+            if "training_task" in parsed_key_yaml:
+                print(60 * "#")
+                print(f"{key_yaml=}")
+                print(60 * "#")
+                print(f"{parsed_key_yaml=}")
+                print(60 * "#")
+                print(f"{parsed_content_before=}")
+                print(60 * "#")
+                print(f"{parsed_content=}")
+                print(60 * "#")
+        return parsed_content
+
+    def yaml_iterator(self) -> Iterator[str]:
+        with open(self.path, "r") as f:
+            key = ""
+            for line in f:
+                if len(line.strip()) == 0:
+                    continue
+                if line[0] != " ":
+                    if len(key) == 0:
+                        key = line.strip()
+
+                    yield key
+                    key = ""
+                key += line
+
+            yield key
