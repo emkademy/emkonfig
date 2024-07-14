@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 ARG USER_ID
 ARG USER_NAME
@@ -31,7 +31,7 @@ COPY pyproject.toml *.lock /app/
 WORKDIR /app
 
 RUN poetry config virtualenvs.create false \
-    && python3.10 -m venv ${VIRTUAL_ENV} \
+    && python3.11 -m venv ${VIRTUAL_ENV} \
     && pip install --upgrade pip setuptools \
     && poetry install && cp poetry.lock ${BUILD_POETRY_LOCK} \
     && rm -rf ${HOME}/.cache/*

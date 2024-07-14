@@ -1,7 +1,6 @@
 import re
 
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from enum import Enum
 from typing import Any, Iterator
 
@@ -59,9 +58,7 @@ class ClassSlugParser(Parser):
                 new_values = []
                 for item in value:
                     new_values.append(self.parse(full_content, item, seen))
-                new_key_update_dict = new_content.get(key, [])
                 new_content[key] = new_values
-                new_content[key].extend(new_key_update_dict)
             elif isinstance(value, dict):
                 if key not in seen:
                     new_content[key] = self.parse(full_content, value, seen)
@@ -79,8 +76,7 @@ class ClassSlugParser(Parser):
                 if new_key == "_":
                     new_content.update({"_target_": cls_location, **parameters})
                 else:
-                    new_key_update_dict = new_content.get(new_key, {})
-                    new_content[new_key] = {"_target_": cls_location, **parameters, **new_key_update_dict}
+                    new_content[new_key] = {"_target_": cls_location, **parameters}
                 seen.add(new_key)
                 del new_content[key]
 
@@ -185,7 +181,7 @@ class FullConfigParser:
 
     def parse(self) -> dict[str, Any]:
         parsed_content = self.line_by_line_parser()
-        # parsed_content = self.referance_key_parser.parse(parsed_content)
+        parsed_content = self.referance_key_parser.parse(parsed_content)
         return parsed_content
 
     def line_by_line_parser(self) -> dict[str, Any]:
@@ -193,22 +189,11 @@ class FullConfigParser:
         for key in self.yaml_iterator():
             key_yaml = OmegaConf.to_container(OmegaConf.create(key))  # type: ignore
             parsed_key_yaml = self.parser.parse(key_yaml)  # type: ignore
-            parsed_content_before = deepcopy(parsed_key_yaml)
             parsed_content = merge_dicts(
                 parsed_content,
                 parsed_key_yaml,
                 concat_lists=False,
             )
-            if "training_task" in parsed_key_yaml:
-                print(60 * "#")
-                print(f"{key_yaml=}")
-                print(60 * "#")
-                print(f"{parsed_key_yaml=}")
-                print(60 * "#")
-                print(f"{parsed_content_before=}")
-                print(60 * "#")
-                print(f"{parsed_content=}")
-                print(60 * "#")
         return parsed_content
 
     def yaml_iterator(self) -> Iterator[str]:

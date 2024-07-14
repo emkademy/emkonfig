@@ -16,6 +16,8 @@ register_class("lala", Lala, partial=True)
 if __name__ == "__main__":
     emkonfig = Emkonfig("examples/configs/config.yaml")
     config = emkonfig.parse()
+    print(60 * "-")
     emkonfig.print(config)
+    print(60 * "-")
     # some_class = instantiate(config.nihao)
     # print(some_class)
