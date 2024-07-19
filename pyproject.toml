@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "emkonfig"
-version = "0.2.0"
+version = "0.3.0"
 description = "YAML template based configuration management tool"
 authors = ["Kıvanç Yüksel <kivanc.yuksel@emkademy.com>"]
 readme = "README.md"
@@ -32,7 +32,7 @@ pytest-cov = "~=4.1"
 pytest-xdist = "~=3.5"
 pytest-sugar = "~=0.9"
 pytest-mock = "~=3.12"
-gcsfs = "~=2024.6"
+universal-pathlib = "~=0.2"
 
 [build-system]
 requires = ["poetry-core"]

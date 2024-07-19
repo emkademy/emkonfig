@@ -1,3 +1,4 @@
+import argparse
 import re
 
 from abc import ABC, abstractmethod
@@ -146,6 +147,25 @@ class ReferenceKeyParser(Parser):
         return value
 
 
+class ArgsParser(Parser):
+    def __init__(self) -> None:
+        self.sequence_parser = SequenceParser()
+
+    def parse(self, full_content: dict[str, Any], content: dict[str, Any]) -> dict[str, Any]:
+        overwrites = self.parse_overwrites()
+        merged_content = merge_dicts(full_content, overwrites, concat_lists=False)
+        merged_content = self.sequence_parser.parse(merged_content)
+        return merged_content
+
+    def parse_overwrites(self) -> dict[str, Any]:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--overwrites", type=str, nargs="*", default=[])
+
+        args = parser.parse_args()
+        overwrites_dict = OmegaConf.from_dotlist(args.overwrites)
+        return OmegaConf.to_container(overwrites_dict)  # type: ignore
+
+
 class SequenceParser:
     def __init__(self, parse_order: list[Syntax] | None = None, syntax_to_parser: dict[Syntax, Parser] | None = None) -> None:
         if parse_order is None:
@@ -177,11 +197,11 @@ class FullConfigParser:
     def __init__(self, path: str) -> None:
         self.path = path
         self.parser = SequenceParser(parse_order=[Syntax.REFERENCE_YAML, Syntax.CLASS_SLUG])
-        self.referance_key_parser = SequenceParser(parse_order=[Syntax.REFERENCE_KEY])
+        self.referance_key_parser = ReferenceKeyParser()
 
     def parse(self) -> dict[str, Any]:
         parsed_content = self.line_by_line_parser()
-        parsed_content = self.referance_key_parser.parse(parsed_content)
+        parsed_content = self.referance_key_parser.parse(parsed_content, parsed_content)
         return parsed_content
 
     def line_by_line_parser(self) -> dict[str, Any]:
