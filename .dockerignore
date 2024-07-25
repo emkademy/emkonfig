@@ -2,5 +2,6 @@
 
 !docker
 !emkonfig
+!README.md
 !pyproject.toml
 !poetry.lock

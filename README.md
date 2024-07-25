@@ -85,6 +85,8 @@ final_parameter: item3
 
 In Emkonfig, you can register your classes, then reference them using the slug you registered them with. You can either use `emkonfig.registry.register` or `emkonfig.registry.register_class` for this.
 
+**NOTE:** You have to make sure that the module containing the classes you want to register is imported before parsing the configuration file. For that, you can use the utility function: `emkonfig.utils.import_modules(dir_name: str, exclude: list[str] | set[str] | None = None, verbose: bool = False)`. This function imports all of the modules under the given directory. If you encounter a parsing error stating that the reference slug for a class couldn't be found, it it very likely that there is an error in one of your files.
+
 ```python
 # my_project.some_module.some_file.py
 from emkonfig.registry import register, register_class
