@@ -20,12 +20,12 @@ class _TestClass:
         self.arg5 = arg5
 
 
-def test_get_default_arguments():
+def test_get_default_arguments() -> None:
     defaults = get_default_arguments(_TestClass)
     assert defaults == {"arg1": "arg1", "arg2": 3, "arg3": 3.14, "arg4": [1.2, 3.4, 5.6], "arg5": {"key1": 1, "key2": 2}}
 
 
-def test_register():
+def test_register() -> None:
     test_cls = _TestClass("")
     assert isinstance(test_cls, _TestClass)
 
@@ -41,7 +41,7 @@ def test_register():
     }
 
 
-def test_register_class():
+def test_register_class() -> None:
     class _TestClass2:
         def __init__(self, arg0: str, arg1: str = "arg1") -> None:
             self.arg0 = arg0

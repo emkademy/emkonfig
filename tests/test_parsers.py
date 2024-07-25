@@ -2,7 +2,7 @@ from emkonfig.parsers import ReferenceKeyParser
 
 
 class TestReferenceKeyParser:
-    def test_is_reference_key(self):
+    def test_is_reference_key(self) -> None:
         assert ReferenceKeyParser.is_reference_key("${key}")
         assert ReferenceKeyParser.is_reference_key("${key[0].some_other_key}")
         assert not ReferenceKeyParser.is_reference_key("${key.yaml}")

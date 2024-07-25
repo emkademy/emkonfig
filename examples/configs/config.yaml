@@ -1,3 +1,10 @@
+defaults:
+  - head@this_is_from_defaults_list: linear
+  - callback/stack@callbacks:
+      - callback1
+      - callback2
+      - callback3
+
 backbone: resnet50
 
 _{some_class as model}:
@@ -9,16 +16,16 @@ data_module:
   n_workers: 8
   _{some_class as dataset}:
     lala: 32
-    hoho: nihaha
+    lorem: ipsum
 
 training_task:
   data_module: ${data_module}
-  lalala:
-    - _{some_class as nihaha}:
-        oldu: mu
-        olmadi: mi
+  some_param:
+    - _{some_class as some_class_renamed}:
+        param1: param1
+        random1: random1
         backbone: ${backbone}
-    - ${training_task.lalala[0].nihaha.oldu}
+    - ${training_task.some_param[0].some_class_renamed.random1}
 
   lightning_module:
     _target_: dummy.lightning_modules.SomeLightningModule
@@ -30,15 +37,15 @@ evaluation_task:
   lightning_module:
     model: ${model}
     batch_size: ${data_module.batch_size}
-    oldu: ${./examples/configs/backbone/resnet50.yaml}
+    resnet50_reference: ${./examples/configs/backbone/resnet50.yaml}
 
 head: ${./examples/configs/head/linear.yaml}
 
 asd:
   bsd: ${data_module.dataset}
 
-_{yet_another_class as nihao}:
-  hoho: 5
+_{yet_another_class as yet_another_class_renamed}:
+  fox: 5
   _{some_other_class}:
     batch_size: 1212
 

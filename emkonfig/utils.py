@@ -12,7 +12,7 @@ from emkonfig.external.hydra.instantiate import instantiate as hydra_instantiate
 instantiate = hydra_instantiate
 
 
-def merge_dicts(dict1: dict, dict2: dict, concat_lists=True) -> dict:
+def merge_dicts(dict1: dict, dict2: dict, concat_lists: bool = True) -> dict:
     for key in dict2:
         if key in dict1:
             if isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
@@ -32,6 +32,7 @@ def merge_dicts(dict1: dict, dict2: dict, concat_lists=True) -> dict:
 def load_yaml(path: str) -> dict[str, Any]:
     with UPath(path).open("r") as f:
         content = yaml.safe_load(f)
+    assert isinstance(content, dict)
     return content
 
 

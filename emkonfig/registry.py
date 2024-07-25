@@ -18,8 +18,8 @@ def get_default_arguments(cls: Any) -> dict[str, Any]:
     return defaults
 
 
-def register(cls_slug: str):
-    def decorator(cls):
+def register(cls_slug: str) -> Any:
+    def decorator(cls: Any) -> Any:
         if cls_slug not in _EMKONFIG_DEFAULTS_REGISTRY:
             _EMKONFIG_DEFAULTS_REGISTRY[cls_slug] = get_default_arguments(cls)
             _EMKONFIG_REGISTRY[cls_slug] = cls
@@ -28,7 +28,7 @@ def register(cls_slug: str):
     return decorator
 
 
-def register_class(slug: str, cls, partial: bool = False, **kwargs) -> None:
+def register_class(slug: str, cls: Any, partial: bool = False, **kwargs: Any) -> None:
     if slug not in _EMKONFIG_DEFAULTS_REGISTRY:
         default_arguments = get_default_arguments(cls)
         default_arguments.update(kwargs)

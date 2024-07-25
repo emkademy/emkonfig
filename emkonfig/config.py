@@ -12,7 +12,7 @@ class Emkonfig:
     def parse(self) -> DictConfig:
         if self.config is None:
             parsed_config = self.parser.parse()
-            parsed_config = self.args_parser.parse(parsed_config, parsed_config)
+            parsed_config = self.args_parser.parse(parsed_config, parsed_config)  # type: ignore
             self.config = OmegaConf.create(parsed_config)
         return self.config
 

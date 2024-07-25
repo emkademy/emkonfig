@@ -93,7 +93,7 @@ exec-in: up
 
  ## Package the code and share it on PyPi
 package: up
-	@$(DOCKER_COMPOSE_EXEC) poetry publish --build
+	poetry publish --build
 
 .DEFAULT_GOAL := help
 
