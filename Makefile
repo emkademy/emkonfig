@@ -17,7 +17,7 @@ SERVICE_NAME = app
 
 DIRS_TO_VALIDATE = emkonfig tests
 DOCKER_COMPOSE_RUN = $(DOCKER_COMPOSE_COMMAND) run --rm $(SERVICE_NAME)
-DOCKER_COMPOSE_EXEC = $(DOCKER_COMPOSE_COMMAND) exec $(SERVICE_NAME)
+DOCKER_COMPOSE_EXEC = $(DOCKER_COMPOSE_COMMAND) exec -T $(SERVICE_NAME)
 
 # Returns true if the stem is a non-empty environment variable, or else raises an error.
 guard-%:
